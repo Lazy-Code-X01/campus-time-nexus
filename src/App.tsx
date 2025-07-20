@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
+import Timetables from "./pages/Timetables";
 import Login from "./pages/auth/Login";
 import NotFound from "./pages/NotFound";
 
@@ -24,7 +25,7 @@ const App = () => (
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
             {/* Placeholder routes - will be implemented in later phases */}
-            <Route path="timetables" element={<div className="p-8 text-center text-muted-foreground">Timetables page coming soon...</div>} />
+            <Route path="timetables" element={<Timetables />} />
             <Route path="courses" element={<div className="p-8 text-center text-muted-foreground">Courses page coming soon...</div>} />
             <Route path="lecturers" element={<div className="p-8 text-center text-muted-foreground">Lecturers page coming soon...</div>} />
             <Route path="departments" element={<div className="p-8 text-center text-muted-foreground">Departments page coming soon...</div>} />
