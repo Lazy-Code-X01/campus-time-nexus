@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Timetables from "./pages/Timetables";
+import Analytics from "./pages/Analytics";
 import Login from "./pages/auth/Login";
 import NotFound from "./pages/NotFound";
 
@@ -26,6 +27,7 @@ const App = () => (
             <Route index element={<Dashboard />} />
             {/* Placeholder routes - will be implemented in later phases */}
             <Route path="timetables" element={<Timetables />} />
+            <Route path="analytics" element={<Analytics />} />
             <Route path="courses" element={<div className="p-8 text-center text-muted-foreground">Courses page coming soon...</div>} />
             <Route path="lecturers" element={<div className="p-8 text-center text-muted-foreground">Lecturers page coming soon...</div>} />
             <Route path="departments" element={<div className="p-8 text-center text-muted-foreground">Departments page coming soon...</div>} />

@@ -8,6 +8,9 @@ import { TimetableGrid } from "@/components/timetable/TimetableGrid";
 import { TimetableFilters } from "@/components/timetable/TimetableFilters";
 import { CreateScheduleDialog } from "@/components/timetable/CreateScheduleDialog";
 import { ScheduleConflictChecker, mockConflicts } from "@/components/timetable/ScheduleConflictChecker";
+import { AdvancedFilters } from "@/components/timetable/AdvancedFilters";
+import { BulkOperations } from "@/components/timetable/BulkOperations";
+import { TemplateManager } from "@/components/timetable/TemplateManager";
 
 // Mock data for demonstration
 const mockDepartments = [
@@ -30,6 +33,8 @@ export default function Timetables() {
   const [selectedLecturer, setSelectedLecturer] = useState<string>("all");
   const [selectedWeek, setSelectedWeek] = useState<string>("current");
   const [showConflicts, setShowConflicts] = useState(true);
+  const [selectedSchedules, setSelectedSchedules] = useState<number>(0);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const handleExportPDF = () => {
     // TODO: Implement PDF export functionality
@@ -46,6 +51,24 @@ export default function Timetables() {
     // TODO: Implement conflict resolution
   };
 
+  // Advanced features handlers
+  const handleSearchChange = (query: string) => {
+    console.log("Search query:", query);
+  };
+
+  const handleBulkOperations = {
+    delete: () => console.log("Bulk delete"),
+    move: (target: string) => console.log("Bulk move to:", target),
+    duplicate: () => console.log("Bulk duplicate"),
+    import: (data: any) => console.log("Import data:", data),
+    export: (format: string) => console.log("Export as:", format)
+  };
+
+  const handleTemplateOperations = {
+    apply: (templateId: string) => console.log("Apply template:", templateId),
+    save: () => console.log("Save as template")
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -57,6 +80,13 @@ export default function Timetables() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+          >
+            <Filter className="mr-2 h-4 w-4" />
+            Advanced Filters
+          </Button>
           <Button variant="outline" onClick={handleExportPDF}>
             <Download className="mr-2 h-4 w-4" />
             Export PDF
@@ -81,6 +111,33 @@ export default function Timetables() {
         onWeekChange={setSelectedWeek}
         departments={mockDepartments}
         lecturers={mockLecturers}
+      />
+
+      {/* Advanced Filters */}
+      {showAdvancedFilters && (
+        <AdvancedFilters
+          onSearchChange={handleSearchChange}
+          onRoomFilter={(room) => console.log("Room filter:", room)}
+          onTimeSlotFilter={(slot) => console.log("Time slot filter:", slot)}
+          onCapacityFilter={(capacity) => console.log("Capacity filter:", capacity)}
+          onAvailabilityFilter={(available) => console.log("Availability filter:", available)}
+        />
+      )}
+
+      {/* Template Manager */}
+      <TemplateManager
+        onApplyTemplate={handleTemplateOperations.apply}
+        onSaveAsTemplate={handleTemplateOperations.save}
+      />
+
+      {/* Bulk Operations */}
+      <BulkOperations
+        selectedCount={selectedSchedules}
+        onBulkDelete={handleBulkOperations.delete}
+        onBulkMove={handleBulkOperations.move}
+        onBulkDuplicate={handleBulkOperations.duplicate}
+        onImport={handleBulkOperations.import}
+        onExport={handleBulkOperations.export}
       />
 
       {/* Stats Cards */}

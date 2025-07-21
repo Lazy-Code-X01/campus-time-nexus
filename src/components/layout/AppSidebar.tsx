@@ -55,6 +55,12 @@ const navigationItems = {
       group: "Management"
     },
     {
+      title: "Analytics",
+      url: "/analytics", 
+      icon: BarChart3,
+      group: "Analytics"
+    },
+    {
       title: "Reports",
       url: "/reports",
       icon: Download,
