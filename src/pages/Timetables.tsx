@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { TimetableGrid } from "@/components/timetable/TimetableGrid";
 import { TimetableFilters } from "@/components/timetable/TimetableFilters";
+import { CreateScheduleDialog } from "@/components/timetable/CreateScheduleDialog";
+import { ScheduleConflictChecker, mockConflicts } from "@/components/timetable/ScheduleConflictChecker";
 
 // Mock data for demonstration
 const mockDepartments = [
@@ -27,10 +29,21 @@ export default function Timetables() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [selectedLecturer, setSelectedLecturer] = useState<string>("all");
   const [selectedWeek, setSelectedWeek] = useState<string>("current");
+  const [showConflicts, setShowConflicts] = useState(true);
 
   const handleExportPDF = () => {
     // TODO: Implement PDF export functionality
     console.log("Exporting timetable as PDF...");
+  };
+
+  const handleSaveSchedule = (scheduleData: any) => {
+    console.log("Saving new schedule:", scheduleData);
+    // TODO: Implement save functionality
+  };
+
+  const handleResolveConflict = (conflictId: string, resolution: string) => {
+    console.log("Resolving conflict:", conflictId, resolution);
+    // TODO: Implement conflict resolution
   };
 
   return (
@@ -48,10 +61,11 @@ export default function Timetables() {
             <Download className="mr-2 h-4 w-4" />
             Export PDF
           </Button>
-          <Button>
-            <Calendar className="mr-2 h-4 w-4" />
-            Create Schedule
-          </Button>
+          <CreateScheduleDialog
+            departments={mockDepartments}
+            lecturers={mockLecturers}
+            onSave={handleSaveSchedule}
+          />
         </div>
       </div>
 
@@ -104,6 +118,14 @@ export default function Timetables() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Conflict Detection */}
+      {showConflicts && mockConflicts.length > 0 && (
+        <ScheduleConflictChecker 
+          conflicts={mockConflicts}
+          onResolveConflict={handleResolveConflict}
+        />
+      )}
 
       {/* Timetable Grid */}
       <Card>

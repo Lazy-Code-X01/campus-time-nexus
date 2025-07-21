@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { QuickScheduleActions } from "./QuickScheduleActions";
 
 interface Department {
   id: string;
@@ -30,6 +31,7 @@ interface TimetableEvent {
   room: string;
   department: string;
   time: string;
+  day: string;
   duration: number; // in hours
   students: number;
   capacity: number;
@@ -43,6 +45,9 @@ interface TimetableGridProps {
   selectedLecturer: string;
   departments: Department[];
   lecturers: Lecturer[];
+  onUpdateEvent?: (eventId: string, updates: Partial<TimetableEvent>) => void;
+  onDeleteEvent?: (eventId: string) => void;
+  onDuplicateEvent?: (event: TimetableEvent) => void;
 }
 
 // Mock timetable data
@@ -54,6 +59,7 @@ const mockEvents: TimetableEvent[] = [
     room: "CS-101",
     department: "cs",
     time: "09:00",
+    day: "Monday",
     duration: 2,
     students: 85,
     capacity: 100,
@@ -66,6 +72,7 @@ const mockEvents: TimetableEvent[] = [
     room: "MATH-205",
     department: "math",
     time: "11:00",
+    day: "Tuesday",
     duration: 1.5,
     students: 65,
     capacity: 80,
@@ -78,6 +85,7 @@ const mockEvents: TimetableEvent[] = [
     room: "PHY-LAB1",
     department: "physics",
     time: "14:00",
+    day: "Wednesday",
     duration: 3,
     students: 24,
     capacity: 25,
@@ -90,6 +98,7 @@ const mockEvents: TimetableEvent[] = [
     room: "CS-102",
     department: "cs",
     time: "10:00",
+    day: "Monday",
     duration: 2,
     students: 72,
     capacity: 80,
@@ -103,6 +112,7 @@ const mockEvents: TimetableEvent[] = [
     room: "ENG-401",
     department: "eng",
     time: "13:00",
+    day: "Friday",
     duration: 2,
     students: 45,
     capacity: 50,
@@ -122,12 +132,33 @@ export function TimetableGrid({
   selectedDepartment,
   selectedLecturer,
   departments,
-  lecturers
+  lecturers,
+  onUpdateEvent,
+  onDeleteEvent,
+  onDuplicateEvent
 }: TimetableGridProps) {
   const [selectedEvent, setSelectedEvent] = useState<TimetableEvent | null>(null);
+  const [events, setEvents] = useState<TimetableEvent[]>(mockEvents);
+
+  const handleUpdateEvent = (eventId: string, updates: Partial<TimetableEvent>) => {
+    setEvents(prev => prev.map(event => 
+      event.id === eventId ? { ...event, ...updates } : event
+    ));
+    onUpdateEvent?.(eventId, updates);
+  };
+
+  const handleDeleteEvent = (eventId: string) => {
+    setEvents(prev => prev.filter(event => event.id !== eventId));
+    onDeleteEvent?.(eventId);
+  };
+
+  const handleDuplicateEvent = (event: TimetableEvent) => {
+    setEvents(prev => [...prev, event]);
+    onDuplicateEvent?.(event);
+  };
 
   // Filter events based on current filters
-  const filteredEvents = mockEvents.filter(event => {
+  const filteredEvents = events.filter(event => {
     if (viewMode === "department" && selectedDepartment !== "all") {
       return event.department === selectedDepartment;
     }
@@ -197,21 +228,31 @@ export function TimetableGrid({
                       <DialogTrigger asChild>
                         <Card 
                           className={`
-                            p-3 cursor-pointer transition-all hover:shadow-md
+                            group p-3 cursor-pointer transition-all hover:shadow-md
                             ${event.conflict ? 'border-destructive bg-destructive/10' : ''}
                             ${getDepartmentColor(event.department).replace('bg-', 'border-l-4 border-l-')}
                           `}
                           onClick={() => setSelectedEvent(event)}
                         >
                           <div className="space-y-1">
-                            <div className="flex items-center gap-1 text-xs">
-                              <span>{getTypeIcon(event.type)}</span>
-                              <Badge variant="outline" className="text-xs">
-                                {event.type}
-                              </Badge>
-                              {event.conflict && (
-                                <AlertTriangle className="h-3 w-3 text-destructive" />
-                              )}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1 text-xs">
+                                <span>{getTypeIcon(event.type)}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {event.type}
+                                </Badge>
+                                {event.conflict && (
+                                  <AlertTriangle className="h-3 w-3 text-destructive" />
+                                )}
+                              </div>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <QuickScheduleActions
+                                  event={event}
+                                  onUpdate={handleUpdateEvent}
+                                  onDelete={handleDeleteEvent}
+                                  onDuplicate={handleDuplicateEvent}
+                                />
+                              </div>
                             </div>
                             <h4 className="font-medium text-sm leading-tight">{event.title}</h4>
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
