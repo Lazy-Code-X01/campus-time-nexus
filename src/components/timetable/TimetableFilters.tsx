@@ -1,20 +1,11 @@
-import { Filter, Calendar, Users, Building } from "lucide-react";
+
+import { Filter } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-interface Department {
-  id: string;
-  name: string;
-  color: string;
-}
-
-interface Lecturer {
-  id: string;
-  name: string;
-  department: string;
-}
+import { useDepartments } from "@/hooks/useDepartments";
+import { useLecturers } from "@/hooks/useLecturers";
 
 interface TimetableFiltersProps {
   selectedDepartment: string;
@@ -23,8 +14,6 @@ interface TimetableFiltersProps {
   onLecturerChange: (lecturer: string) => void;
   selectedWeek: string;
   onWeekChange: (week: string) => void;
-  departments: Department[];
-  lecturers: Lecturer[];
 }
 
 export function TimetableFilters({
@@ -33,13 +22,10 @@ export function TimetableFilters({
   selectedLecturer,
   onLecturerChange,
   selectedWeek,
-  onWeekChange,
-  departments,
-  lecturers
+  onWeekChange
 }: TimetableFiltersProps) {
-  const filteredLecturers = selectedDepartment === "all" 
-    ? lecturers 
-    : lecturers.filter(l => l.department === selectedDepartment);
+  const { departments, loading: departmentsLoading } = useDepartments();
+  const { lecturers, loading: lecturersLoading } = useLecturers(selectedDepartment);
 
   return (
     <Card>
@@ -48,7 +34,11 @@ export function TimetableFilters({
           {/* Department Filter */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">Department</label>
-            <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
+            <Select 
+              value={selectedDepartment} 
+              onValueChange={onDepartmentChange}
+              disabled={departmentsLoading}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Select department" />
               </SelectTrigger>
@@ -57,7 +47,10 @@ export function TimetableFilters({
                 {departments.map((dept) => (
                   <SelectItem key={dept.id} value={dept.id}>
                     <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${dept.color}`} />
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: dept.color }}
+                      />
                       {dept.name}
                     </div>
                   </SelectItem>
@@ -69,13 +62,17 @@ export function TimetableFilters({
           {/* Lecturer Filter */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">Lecturer</label>
-            <Select value={selectedLecturer} onValueChange={onLecturerChange}>
+            <Select 
+              value={selectedLecturer} 
+              onValueChange={onLecturerChange}
+              disabled={lecturersLoading}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Select lecturer" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Lecturers</SelectItem>
-                {filteredLecturers.map((lecturer) => (
+                {lecturers.map((lecturer) => (
                   <SelectItem key={lecturer.id} value={lecturer.id}>
                     {lecturer.name}
                   </SelectItem>

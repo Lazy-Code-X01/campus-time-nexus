@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Bell, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ export function Header() {
   };
 
   return (
-    <header className="h-16 border-b bg-card flex items-center justify-between px-6">
+    <header className="sticky top-0 z-40 h-16 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
         <SidebarTrigger />
         <div>

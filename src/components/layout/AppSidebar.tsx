@@ -1,4 +1,5 @@
-import { Calendar, Users, Clock, BookOpen, Settings, BarChart3, Download, Home } from "lucide-react";
+
+import { Calendar, Users, Home } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -49,18 +50,6 @@ const navigationItems = {
       url: "/my-schedule",
       icon: Calendar,
       group: "Teaching"
-    },
-    {
-      title: "My Courses",
-      url: "/my-courses",
-      icon: BookOpen,
-      group: "Teaching"
-    },
-    {
-      title: "Time Preferences",
-      url: "/preferences",
-      icon: Clock,
-      group: "Settings"
     }
   ],
   student: [
@@ -75,18 +64,6 @@ const navigationItems = {
       url: "/my-timetable",
       icon: Calendar,
       group: "Academic"
-    },
-    {
-      title: "Course Schedule",
-      url: "/course-schedule",
-      icon: BookOpen,
-      group: "Academic"
-    },
-    {
-      title: "Download PDF",
-      url: "/download",
-      icon: Download,
-      group: "Tools"
     }
   ]
 };
@@ -116,8 +93,8 @@ export function AppSidebar() {
       : "hover:bg-sidebar-accent/50";
 
   return (
-    <Sidebar className={collapsed ? "w-14" : "w-64"}>
-      <SidebarContent>
+    <Sidebar className={`sticky top-0 h-screen ${collapsed ? "w-14" : "w-64"}`}>
+      <SidebarContent className="overflow-y-auto">
         {Object.entries(groupedItems).map(([groupName, groupItems]) => (
           <SidebarGroup key={groupName}>
             {!collapsed && <SidebarGroupLabel>{groupName}</SidebarGroupLabel>}
