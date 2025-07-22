@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { Calendar, Filter, Download, Users, BookOpen } from "lucide-react";
+import { Calendar, Filter, Download, Users, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TimetableGrid } from "@/components/timetable/TimetableGrid";
 import { TimetableFilters } from "@/components/timetable/TimetableFilters";
 import { CreateScheduleDialog } from "@/components/timetable/CreateScheduleDialog";
 import { ScheduleConflictChecker, mockConflicts } from "@/components/timetable/ScheduleConflictChecker";
 import { AdvancedFilters } from "@/components/timetable/AdvancedFilters";
 import { BulkOperations } from "@/components/timetable/BulkOperations";
-import { TemplateManager } from "@/components/timetable/TemplateManager";
 
 // Mock data for demonstration
 const mockDepartments = [
@@ -28,13 +28,14 @@ const mockLecturers = [
 ];
 
 export default function Timetables() {
-  const [viewMode, setViewMode] = useState<"department" | "lecturer" | "room">("department");
+  const [viewMode] = useState<"department">("department"); // Fixed to department view
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [selectedLecturer, setSelectedLecturer] = useState<string>("all");
   const [selectedWeek, setSelectedWeek] = useState<string>("current");
   const [showConflicts, setShowConflicts] = useState(true);
   const [selectedSchedules, setSelectedSchedules] = useState<number>(0);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [conflictsOpen, setConflictsOpen] = useState(false);
 
   const handleExportPDF = () => {
     // TODO: Implement PDF export functionality
@@ -101,8 +102,6 @@ export default function Timetables() {
 
       {/* Filters */}
       <TimetableFilters
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
         selectedDepartment={selectedDepartment}
         onDepartmentChange={setSelectedDepartment}
         selectedLecturer={selectedLecturer}
@@ -123,12 +122,6 @@ export default function Timetables() {
           onAvailabilityFilter={(available) => console.log("Availability filter:", available)}
         />
       )}
-
-      {/* Template Manager */}
-      <TemplateManager
-        onApplyTemplate={handleTemplateOperations.apply}
-        onSaveAsTemplate={handleTemplateOperations.save}
-      />
 
       {/* Bulk Operations */}
       <BulkOperations
@@ -178,10 +171,33 @@ export default function Timetables() {
 
       {/* Conflict Detection */}
       {showConflicts && mockConflicts.length > 0 && (
-        <ScheduleConflictChecker 
-          conflicts={mockConflicts}
-          onResolveConflict={handleResolveConflict}
-        />
+        <Collapsible open={conflictsOpen} onOpenChange={setConflictsOpen}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Schedule Conflicts</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="destructive">{mockConflicts.length}</Badge>
+                    {conflictsOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0">
+                <ScheduleConflictChecker 
+                  conflicts={mockConflicts}
+                  onResolveConflict={handleResolveConflict}
+                />
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
       )}
 
       {/* Timetable Grid */}
@@ -189,15 +205,15 @@ export default function Timetables() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>
-              {viewMode === "department" && selectedDepartment !== "all" 
+              {selectedDepartment !== "all" 
                 ? `${mockDepartments.find(d => d.id === selectedDepartment)?.name} Schedule`
-                : viewMode === "lecturer" && selectedLecturer !== "all"
+                : selectedLecturer !== "all"
                 ? `${mockLecturers.find(l => l.id === selectedLecturer)?.name} Schedule`
                 : "Weekly Timetable"}
             </CardTitle>
             <div className="flex gap-2">
               <Badge variant="outline">Week of Nov 18-22, 2024</Badge>
-              {viewMode === "department" && selectedDepartment !== "all" && (
+              {selectedDepartment !== "all" && (
                 <Badge 
                   className={`${mockDepartments.find(d => d.id === selectedDepartment)?.color} text-white`}
                 >

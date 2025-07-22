@@ -31,46 +31,10 @@ const navigationItems = {
       group: "Management"
     },
     {
-      title: "Courses",
-      url: "/courses",
-      icon: BookOpen,
-      group: "Management"
-    },
-    {
       title: "Lecturers",
       url: "/lecturers",
       icon: Users,
       group: "Management"
-    },
-    {
-      title: "Departments",
-      url: "/departments",
-      icon: BarChart3,
-      group: "Management"
-    },
-    {
-      title: "Time Slots",
-      url: "/time-slots",
-      icon: Clock,
-      group: "Management"
-    },
-    {
-      title: "Analytics",
-      url: "/analytics", 
-      icon: BarChart3,
-      group: "Analytics"
-    },
-    {
-      title: "Reports",
-      url: "/reports",
-      icon: Download,
-      group: "Analytics"
-    },
-    {
-      title: "Settings",
-      url: "/settings",
-      icon: Settings,
-      group: "System"
     }
   ],
   lecturer: [
