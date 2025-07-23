@@ -108,8 +108,6 @@ export default function Timetables() {
         onLecturerChange={setSelectedLecturer}
         selectedWeek={selectedWeek}
         onWeekChange={setSelectedWeek}
-        departments={mockDepartments}
-        lecturers={mockLecturers}
       />
 
       {/* Advanced Filters */}
