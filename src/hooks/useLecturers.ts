@@ -1,56 +1,14 @@
 
 import { useState, useEffect } from 'react';
 import { Lecturer } from '@/types/database';
+import { supabase } from '@/integrations/supabase/client';
 
-// Mock data with expanded lecturer information
+// Lecturer with details from joined tables
 interface LecturerWithDetails extends Lecturer {
   name: string;
   email: string;
   department_name: string;
 }
-
-const mockLecturers: LecturerWithDetails[] = [
-  { 
-    id: "1", 
-    user_id: "user-1",
-    name: "Dr. Sarah Johnson", 
-    email: "sarah.johnson@university.edu",
-    department_id: "cs",
-    department_name: "Computer Science",
-    specialization: "Data Structures & Algorithms",
-    created_at: new Date().toISOString()
-  },
-  { 
-    id: "2", 
-    user_id: "user-2",
-    name: "Prof. Michael Chen", 
-    email: "michael.chen@university.edu",
-    department_id: "math",
-    department_name: "Mathematics",
-    specialization: "Calculus & Linear Algebra",
-    created_at: new Date().toISOString()
-  },
-  { 
-    id: "3", 
-    user_id: "user-3",
-    name: "Dr. Emily Davis", 
-    email: "emily.davis@university.edu",
-    department_id: "physics",
-    department_name: "Physics",
-    specialization: "Experimental Physics",
-    created_at: new Date().toISOString()
-  },
-  { 
-    id: "4", 
-    user_id: "user-4",
-    name: "Prof. James Wilson", 
-    email: "james.wilson@university.edu",
-    department_id: "eng",
-    department_name: "Engineering",
-    specialization: "Mechanical Engineering",
-    created_at: new Date().toISOString()
-  }
-];
 
 export function useLecturers(departmentId?: string) {
   const [lecturers, setLecturers] = useState<LecturerWithDetails[]>([]);
@@ -58,21 +16,46 @@ export function useLecturers(departmentId?: string) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Replace with Supabase query
     const fetchLecturers = async () => {
       try {
         setLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500));
+        setError(null);
         
-        let filteredLecturers = mockLecturers;
+        let query = supabase
+          .from('lecturers')
+          .select(`
+            *,
+            profiles:user_id (
+              name,
+              email
+            ),
+            departments:department_id (
+              name
+            )
+          `);
+
         if (departmentId && departmentId !== 'all') {
-          filteredLecturers = mockLecturers.filter(l => l.department_id === departmentId);
+          query = query.eq('department_id', departmentId);
         }
-        
-        setLecturers(filteredLecturers);
+
+        const { data, error: supabaseError } = await query.order('created_at');
+
+        if (supabaseError) {
+          throw supabaseError;
+        }
+
+        // Transform the data to match our expected interface
+        const transformedLecturers: LecturerWithDetails[] = (data || []).map((lecturer) => ({
+          ...lecturer,
+          name: lecturer.profiles?.name || 'Unknown',
+          email: lecturer.profiles?.email || '',
+          department_name: lecturer.departments?.name || 'Unknown Department'
+        }));
+
+        setLecturers(transformedLecturers);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch lecturers');
+        console.error('Error fetching lecturers:', err);
       } finally {
         setLoading(false);
       }
