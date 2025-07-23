@@ -1,60 +1,85 @@
 
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-
-// Mock auth context - will be replaced with Supabase Auth
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'admin' | 'lecturer' | 'student';
-  department_id?: string;
-  avatar_url?: string;
-}
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
-  signUp: (email: string, password: string, userData: Partial<User>) => Promise<void>;
+  signUp: (email: string, password: string, userData?: { name?: string; role?: string }) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signOut: () => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>({
-    id: "mock-user-id",
-    email: "john.doe@university.edu",
-    name: "John Doe",
-    role: "admin",
-    department_id: "cs-dept-id",
-    avatar_url: ""
-  });
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signUp = async (email: string, password: string, userData?: { name?: string; role?: string }) => {
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          name: userData?.name || email,
+          role: userData?.role || 'student'
+        }
+      }
+    });
+    
+    return { error };
+  };
 
   const signIn = async (email: string, password: string) => {
-    setLoading(true);
-    // TODO: Replace with Supabase auth
-    console.log('Signing in:', email);
-    setLoading(false);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    
+    return { error };
   };
 
   const signOut = async () => {
-    setLoading(true);
-    // TODO: Replace with Supabase auth
-    setUser(null);
-    setLoading(false);
-  };
-
-  const signUp = async (email: string, password: string, userData: Partial<User>) => {
-    setLoading(true);
-    // TODO: Replace with Supabase auth
-    console.log('Signing up:', email, userData);
-    setLoading(false);
+    const { error } = await supabase.auth.signOut();
+    return { error };
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut, signUp }}>
+    <AuthContext.Provider value={{
+      user,
+      session,
+      loading,
+      signUp,
+      signIn,
+      signOut
+    }}>
       {children}
     </AuthContext.Provider>
   );
