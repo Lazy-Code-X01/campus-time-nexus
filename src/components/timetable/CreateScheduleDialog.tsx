@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Plus, Clock, MapPin, Users, AlertTriangle, Calendar } from "lucide-react";
+import { useDepartments } from "@/hooks/useDepartments";
+import { useLecturers } from "@/hooks/useLecturers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +34,7 @@ interface Department {
 interface Lecturer {
   id: string;
   name: string;
-  department: string;
+  department_id?: string;
 }
 
 interface CreateScheduleDialogProps {
@@ -89,7 +91,7 @@ export function CreateScheduleDialog({ departments, lecturers, onSave }: CreateS
   });
 
   const filteredLecturers = formData.department 
-    ? lecturers.filter(l => l.department === formData.department)
+    ? lecturers.filter(l => l.department_id === formData.department)
     : lecturers;
 
   const checkConflicts = () => {
@@ -119,7 +121,21 @@ export function CreateScheduleDialog({ departments, lecturers, onSave }: CreateS
 
   const handleSubmit = () => {
     if (checkConflicts()) {
-      onSave(formData);
+      // Convert form data to database format
+      const scheduleData = {
+        title: formData.title,
+        department_id: formData.department,
+        lecturer_id: formData.lecturer,
+        type: formData.type,
+        day_of_week: formData.day, // Will be converted to number in hook
+        start_time: formData.startTime,
+        duration: `${formData.duration} hours`,
+        room: formData.room,
+        capacity: formData.capacity,
+        student_count: formData.estimatedStudents
+      };
+      
+      onSave(scheduleData);
       setOpen(false);
       setFormData({
         title: "",

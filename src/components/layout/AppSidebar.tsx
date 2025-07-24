@@ -12,6 +12,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import pcuLogo from "@/assets/pcu-logo.png";
 
 // Mock user role - this will be replaced with real authentication
 const mockUserRole = "admin"; // admin, lecturer, student
@@ -94,6 +95,23 @@ export function AppSidebar() {
 
   return (
     <Sidebar className={`sticky top-0 h-screen ${collapsed ? "w-14" : "w-64"}`}>
+      {/* Logo Section */}
+      <div className="p-4 border-b">
+        <div className="flex items-center gap-3">
+          <img 
+            src={pcuLogo} 
+            alt="PCU Logo" 
+            className="h-8 w-8 flex-shrink-0"
+          />
+          {!collapsed && (
+            <div>
+              <h2 className="font-semibold text-sm">PCU Timetable</h2>
+              <p className="text-xs text-muted-foreground">Management System</p>
+            </div>
+          )}
+        </div>
+      </div>
+      
       <SidebarContent className="overflow-y-auto">
         {Object.entries(groupedItems).map(([groupName, groupItems]) => (
           <SidebarGroup key={groupName}>

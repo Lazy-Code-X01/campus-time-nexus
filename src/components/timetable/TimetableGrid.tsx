@@ -21,7 +21,7 @@ interface Department {
 interface Lecturer {
   id: string;
   name: string;
-  department: string;
+  department_id?: string;
 }
 
 interface TimetableEvent {
@@ -45,7 +45,8 @@ interface TimetableGridProps {
   selectedLecturer: string;
   departments: Department[];
   lecturers: Lecturer[];
-  onUpdateEvent?: (eventId: string, updates: Partial<TimetableEvent>) => void;
+  schedules: any[]; // Real schedule data from Supabase
+  onUpdateEvent?: (eventId: string, updates: any) => void;
   onDeleteEvent?: (eventId: string) => void;
   onDuplicateEvent?: (event: TimetableEvent) => void;
 }
@@ -133,32 +134,43 @@ export function TimetableGrid({
   selectedLecturer,
   departments,
   lecturers,
+  schedules,
   onUpdateEvent,
   onDeleteEvent,
   onDuplicateEvent
 }: TimetableGridProps) {
-  const [selectedEvent, setSelectedEvent] = useState<TimetableEvent | null>(null);
-  const [events, setEvents] = useState<TimetableEvent[]>(mockEvents);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  
+  // Convert Supabase schedules to TimetableEvent format
+  const convertedEvents = schedules.map(schedule => ({
+    id: schedule.id,
+    title: schedule.title,
+    lecturer: schedule.lecturers?.profiles?.name || 'Unknown',
+    room: schedule.room,
+    department: schedule.department_id,
+    time: schedule.start_time,
+    day: ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'][schedule.day_of_week],
+    duration: parseFloat(schedule.duration?.split(' ')[0] || '1'),
+    students: schedule.student_count || 0,
+    capacity: schedule.capacity,
+    type: schedule.type,
+    conflict: false // Will be determined by conflict detection
+  }));
 
-  const handleUpdateEvent = (eventId: string, updates: Partial<TimetableEvent>) => {
-    setEvents(prev => prev.map(event => 
-      event.id === eventId ? { ...event, ...updates } : event
-    ));
+  const handleUpdateEvent = (eventId: string, updates: any) => {
     onUpdateEvent?.(eventId, updates);
   };
 
   const handleDeleteEvent = (eventId: string) => {
-    setEvents(prev => prev.filter(event => event.id !== eventId));
     onDeleteEvent?.(eventId);
   };
 
-  const handleDuplicateEvent = (event: TimetableEvent) => {
-    setEvents(prev => [...prev, event]);
+  const handleDuplicateEvent = (event: any) => {
     onDuplicateEvent?.(event);
   };
 
   // Filter events based on current filters
-  const filteredEvents = events.filter(event => {
+  const filteredEvents = convertedEvents.filter(event => {
     if (viewMode === "department" && selectedDepartment !== "all") {
       return event.department === selectedDepartment;
     }
@@ -170,22 +182,13 @@ export function TimetableGrid({
   });
 
   const getEventForSlot = (day: string, time: string) => {
-    // For demo purposes, we'll randomly place events
-    // In a real app, this would be based on actual scheduling data
-    const dayIndex = weekDays.indexOf(day);
-    const timeIndex = timeSlots.indexOf(time);
-    
-    if (dayIndex === 0 && timeIndex === 1) return filteredEvents[0]; // Monday 09:00
-    if (dayIndex === 1 && timeIndex === 3) return filteredEvents[1]; // Tuesday 11:00
-    if (dayIndex === 2 && timeIndex === 6) return filteredEvents[2]; // Wednesday 14:00
-    if (dayIndex === 0 && timeIndex === 2) return filteredEvents[3]; // Monday 10:00 (conflict)
-    if (dayIndex === 4 && timeIndex === 5) return filteredEvents[4]; // Friday 13:00
-    
-    return null;
+    return filteredEvents.find(event => 
+      event.day === day && event.time === time
+    ) || null;
   };
 
   const getDepartmentColor = (departmentId: string) => {
-    return departments.find(d => d.id === departmentId)?.color || "bg-gray-500";
+    return departments.find(d => d.id === departmentId)?.color || "#6b7280";
   };
 
   const getTypeIcon = (type: TimetableEvent["type"]) => {
@@ -228,10 +231,10 @@ export function TimetableGrid({
                       <DialogTrigger asChild>
                         <Card 
                           className={`
-                            group p-3 cursor-pointer transition-all hover:shadow-md
+                            group p-3 cursor-pointer transition-all hover:shadow-md border-l-4
                             ${event.conflict ? 'border-destructive bg-destructive/10' : ''}
-                            ${getDepartmentColor(event.department).replace('bg-', 'border-l-4 border-l-')}
                           `}
+                          style={{ borderLeftColor: getDepartmentColor(event.department) }}
                           onClick={() => setSelectedEvent(event)}
                         >
                           <div className="space-y-1">

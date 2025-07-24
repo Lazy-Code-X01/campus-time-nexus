@@ -10,24 +10,14 @@ import { TimetableFilters } from "@/components/timetable/TimetableFilters";
 import { CreateScheduleDialog } from "@/components/timetable/CreateScheduleDialog";
 import { ScheduleConflictChecker, mockConflicts } from "@/components/timetable/ScheduleConflictChecker";
 import { AdvancedFilters } from "@/components/timetable/AdvancedFilters";
-import { BulkOperations } from "@/components/timetable/BulkOperations";
-
-// Mock data for demonstration
-const mockDepartments = [
-  { id: "cs", name: "Computer Science", color: "bg-blue-500" },
-  { id: "math", name: "Mathematics", color: "bg-green-500" },
-  { id: "physics", name: "Physics", color: "bg-purple-500" },
-  { id: "eng", name: "Engineering", color: "bg-orange-500" }
-];
-
-const mockLecturers = [
-  { id: "1", name: "Dr. Sarah Johnson", department: "cs" },
-  { id: "2", name: "Prof. Michael Chen", department: "math" },
-  { id: "3", name: "Dr. Emily Davis", department: "physics" },
-  { id: "4", name: "Prof. James Wilson", department: "eng" }
-];
+import { useDepartments } from "@/hooks/useDepartments";
+import { useLecturers } from "@/hooks/useLecturers";
+import { useSchedules } from "@/hooks/useSchedules";
 
 export default function Timetables() {
+  const { departments } = useDepartments();
+  const { lecturers } = useLecturers();
+  const { schedules, createSchedule, updateSchedule, deleteSchedule } = useSchedules();
   const [viewMode] = useState<"department">("department"); // Fixed to department view
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [selectedLecturer, setSelectedLecturer] = useState<string>("all");
@@ -42,9 +32,12 @@ export default function Timetables() {
     console.log("Exporting timetable as PDF...");
   };
 
-  const handleSaveSchedule = (scheduleData: any) => {
-    console.log("Saving new schedule:", scheduleData);
-    // TODO: Implement save functionality
+  const handleSaveSchedule = async (scheduleData: any) => {
+    try {
+      await createSchedule(scheduleData);
+    } catch (error) {
+      console.error("Failed to save schedule:", error);
+    }
   };
 
   const handleResolveConflict = (conflictId: string, resolution: string) => {
@@ -93,8 +86,8 @@ export default function Timetables() {
             Export PDF
           </Button>
           <CreateScheduleDialog
-            departments={mockDepartments}
-            lecturers={mockLecturers}
+            departments={departments}
+            lecturers={lecturers}
             onSave={handleSaveSchedule}
           />
         </div>
@@ -121,15 +114,6 @@ export default function Timetables() {
         />
       )}
 
-      {/* Bulk Operations */}
-      <BulkOperations
-        selectedCount={selectedSchedules}
-        onBulkDelete={handleBulkOperations.delete}
-        onBulkMove={handleBulkOperations.move}
-        onBulkDuplicate={handleBulkOperations.duplicate}
-        onImport={handleBulkOperations.import}
-        onExport={handleBulkOperations.export}
-      />
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -204,18 +188,19 @@ export default function Timetables() {
           <div className="flex items-center justify-between">
             <CardTitle>
               {selectedDepartment !== "all" 
-                ? `${mockDepartments.find(d => d.id === selectedDepartment)?.name} Schedule`
+                ? `${departments.find(d => d.id === selectedDepartment)?.name} Schedule`
                 : selectedLecturer !== "all"
-                ? `${mockLecturers.find(l => l.id === selectedLecturer)?.name} Schedule`
+                ? `${lecturers.find(l => l.id === selectedLecturer)?.name} Schedule`
                 : "Weekly Timetable"}
             </CardTitle>
             <div className="flex gap-2">
               <Badge variant="outline">Week of Nov 18-22, 2024</Badge>
               {selectedDepartment !== "all" && (
                 <Badge 
-                  className={`${mockDepartments.find(d => d.id === selectedDepartment)?.color} text-white`}
+                  style={{ backgroundColor: departments.find(d => d.id === selectedDepartment)?.color }}
+                  className="text-white"
                 >
-                  {mockDepartments.find(d => d.id === selectedDepartment)?.name}
+                  {departments.find(d => d.id === selectedDepartment)?.name}
                 </Badge>
               )}
             </div>
@@ -226,8 +211,11 @@ export default function Timetables() {
             viewMode={viewMode}
             selectedDepartment={selectedDepartment}
             selectedLecturer={selectedLecturer}
-            departments={mockDepartments}
-            lecturers={mockLecturers}
+            departments={departments}
+            lecturers={lecturers}
+            schedules={schedules}
+            onUpdateEvent={updateSchedule}
+            onDeleteEvent={deleteSchedule}
           />
         </CardContent>
       </Card>
