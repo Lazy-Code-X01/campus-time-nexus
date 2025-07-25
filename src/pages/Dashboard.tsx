@@ -43,9 +43,9 @@ export default function Dashboard() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
+        {/* <p className="text-muted-foreground">
           Welcome back! Here's an overview of your timetable management system.
-        </p>
+        </p> */}
       </div>
 
       {/* Stats Grid */}
