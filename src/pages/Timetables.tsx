@@ -1,36 +1,123 @@
-import { useState } from "react";
-import { Calendar, Filter, Download, Users, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect, useState,useRef } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import logo from "@/assets/pcu-logo.png";
+
+
+import {  Download, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TimetableGrid } from "@/components/timetable/TimetableGrid";
 import { TimetableFilters } from "@/components/timetable/TimetableFilters";
 import { CreateScheduleDialog } from "@/components/timetable/CreateScheduleDialog";
-import { ScheduleConflictChecker, mockConflicts } from "@/components/timetable/ScheduleConflictChecker";
-import { AdvancedFilters } from "@/components/timetable/AdvancedFilters";
+import { ScheduleConflictChecker } from "@/components/timetable/ScheduleConflictChecker";
 import { useDepartments } from "@/hooks/useDepartments";
 import { useLecturers } from "@/hooks/useLecturers";
 import { useSchedules } from "@/hooks/useSchedules";
+import { useScheduleConflicts } from "@/hooks/useScheduleConflicts";
+
 
 export default function Timetables() {
   const { departments } = useDepartments();
   const { lecturers } = useLecturers();
   const { schedules, createSchedule, updateSchedule, deleteSchedule } = useSchedules();
-  const [viewMode] = useState<"department">("department"); // Fixed to department view
+  const [viewMode, setViewMode] = useState<"department" | "lecturer" | "room">("department");
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [selectedLecturer, setSelectedLecturer] = useState<string>("all");
+  const [selectedRoom, setSelectedRoom] = useState("all");
   const [selectedWeek, setSelectedWeek] = useState<string>("current");
   const [showConflicts, setShowConflicts] = useState(true);
   const [selectedSchedules, setSelectedSchedules] = useState<number>(0);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [conflictsOpen, setConflictsOpen] = useState(false);
 
-  const handleExportPDF = () => {
-    // TODO: Implement PDF export functionality
-    console.log("Exporting timetable as PDF...");
+  const { conflicts, error, refetch } = useScheduleConflicts();
+
+  useEffect(() => {
+    refetch();
+  }, [schedules]);
+
+
+
+  const timetableRef = useRef<HTMLDivElement>(null);
+
+  const handleExportPDF = async () => {
+    if (!timetableRef.current) return;
+
+    const canvas = await html2canvas(timetableRef.current, { scale: 3 });
+    const imgData = canvas.toDataURL("image/png");
+
+    const pdf = new jsPDF("landscape", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    // Load logo as image
+    const logoImage = new Image();
+    logoImage.src = logo; // this is the imported asset
+
+    logoImage.onload = () => {
+      const padding = 10;
+      const headerHeight = 40;
+
+      // Add logo and titles
+      pdf.addImage(logoImage, "PNG", padding, padding, 25, 25);
+      pdf.setFontSize(18);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Precious Cornerstone University", pageWidth / 2, padding + 10, { align: "center" });
+
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Weekly Timetable", pageWidth / 2, padding + 20, { align: "center" });
+
+      // Add timetable image
+
+    const contentY = headerHeight + padding;
+    const imgWidth = pageWidth - padding * 2;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const pageContentHeight = pageHeight - contentY - padding;
+
+    let renderedHeight = 0;
+    let pageIndex = 0;
+
+    while (renderedHeight < canvas.height) {
+      // Create a temporary canvas for each slice
+      const sliceCanvas = document.createElement("canvas");
+      sliceCanvas.width = canvas.width;
+      sliceCanvas.height = Math.min(canvas.height - renderedHeight, (pageContentHeight * canvas.height) / imgHeight);
+
+      const ctx = sliceCanvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(
+          canvas,
+          0,
+          renderedHeight,
+          canvas.width,
+          sliceCanvas.height,
+          0,
+          0,
+          canvas.width,
+          sliceCanvas.height
+        );
+      }
+
+      const sliceImgData = sliceCanvas.toDataURL("image/png");
+      const sliceImgHeight = (sliceCanvas.height * imgWidth) / canvas.width;
+
+      if (pageIndex > 0) {
+        pdf.addPage("a4", "landscape");
+      }
+
+      pdf.addImage(sliceImgData, "PNG", padding, contentY, imgWidth, sliceImgHeight);
+      renderedHeight += sliceCanvas.height;
+      pageIndex++;
+    }
+
+    pdf.save("PCU-Timetable.pdf");
+
+        };
   };
+
 
   const handleSaveSchedule = async (scheduleData: any) => {
     try {
@@ -50,18 +137,12 @@ export default function Timetables() {
     console.log("Search query:", query);
   };
 
-  const handleBulkOperations = {
-    delete: () => console.log("Bulk delete"),
-    move: (target: string) => console.log("Bulk move to:", target),
-    duplicate: () => console.log("Bulk duplicate"),
-    import: (data: any) => console.log("Import data:", data),
-    export: (format: string) => console.log("Export as:", format)
-  };
-
-  const handleTemplateOperations = {
-    apply: (templateId: string) => console.log("Apply template:", templateId),
-    save: () => console.log("Save as template")
-  };
+  const mockRooms = [
+    { id: "A101", name: "Lecture Hall A101", capacity: 120 },
+    { id: "B205", name: "Seminar Room B205", capacity: 30 },
+    { id: "C301", name: "Computer Lab C301", capacity: 40 },
+    { id: "D105", name: "Physics Lab D105", capacity: 25 }
+  ];
 
   return (
     <div className="space-y-6">
@@ -69,18 +150,8 @@ export default function Timetables() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Timetables</h1>
-          {/* <p className="text-muted-foreground">
-            View and manage course schedules across departments and lecturers.
-          </p> */}
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-          >
-            <Filter className="mr-2 h-4 w-4" />
-            Advanced Filters
-          </Button>
           <Button variant="outline" onClick={handleExportPDF}>
             <Download className="mr-2 h-4 w-4" />
             Export PDF
@@ -99,60 +170,13 @@ export default function Timetables() {
         onDepartmentChange={setSelectedDepartment}
         selectedLecturer={selectedLecturer}
         onLecturerChange={setSelectedLecturer}
-        selectedWeek={selectedWeek}
-        onWeekChange={setSelectedWeek}
+        rooms={mockRooms}
+        selectedRoom={selectedRoom}
+        onRoomChange={setSelectedRoom}
       />
 
-      {/* Advanced Filters */}
-      {showAdvancedFilters && (
-        <AdvancedFilters
-          onSearchChange={handleSearchChange}
-          onRoomFilter={(room) => console.log("Room filter:", room)}
-          onTimeSlotFilter={(slot) => console.log("Time slot filter:", slot)}
-          onCapacityFilter={(capacity) => console.log("Capacity filter:", capacity)}
-          onAvailabilityFilter={(available) => console.log("Availability filter:", available)}
-        />
-      )}
-
-
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Classes</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">42</div>
-            <p className="text-xs text-muted-foreground">This week</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Room Utilization</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">78%</div>
-            <p className="text-xs text-muted-foreground">Average capacity</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Conflicts</CardTitle>
-            <Filter className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">2</div>
-            <p className="text-xs text-muted-foreground">Need resolution</p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Conflict Detection */}
-      {showConflicts && mockConflicts.length > 0 && (
+      {showConflicts && conflicts.length > 0 && (
         <Collapsible open={conflictsOpen} onOpenChange={setConflictsOpen}>
           <Card>
             <CollapsibleTrigger asChild>
@@ -160,7 +184,7 @@ export default function Timetables() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">Schedule Conflicts</CardTitle>
                   <div className="flex items-center gap-2">
-                    <Badge variant="destructive">{mockConflicts.length}</Badge>
+                    <Badge variant="destructive">{conflicts.length}</Badge>
                     {conflictsOpen ? (
                       <ChevronUp className="h-4 w-4" />
                     ) : (
@@ -173,8 +197,8 @@ export default function Timetables() {
             <CollapsibleContent>
               <CardContent className="pt-0">
                 <ScheduleConflictChecker 
-                  conflicts={mockConflicts}
-                  onResolveConflict={handleResolveConflict}
+                  conflicts={conflicts}
+                  // onResolveConflict={handleResolveConflict}
                 />
               </CardContent>
             </CollapsibleContent>
@@ -207,16 +231,20 @@ export default function Timetables() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <TimetableGrid 
-            viewMode={viewMode}
-            selectedDepartment={selectedDepartment}
-            selectedLecturer={selectedLecturer}
-            departments={departments}
-            lecturers={lecturers}
-            schedules={schedules}
-            onUpdateEvent={updateSchedule}
-            onDeleteEvent={deleteSchedule}
-          />
+          
+          <div ref={timetableRef}>
+            <TimetableGrid 
+              viewMode={viewMode}
+              selectedDepartment={selectedDepartment}
+              selectedLecturer={selectedLecturer}
+              departments={departments}
+              selectedRoom={selectedRoom}
+              lecturers={lecturers}
+              schedules={schedules}
+              onUpdateEvent={updateSchedule}
+              onDeleteEvent={deleteSchedule}
+              />
+          </div>
         </CardContent>
       </Card>
     </div>

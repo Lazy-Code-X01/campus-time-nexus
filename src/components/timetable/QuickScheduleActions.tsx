@@ -4,9 +4,6 @@ import {
   Move, 
   Trash2, 
   Edit3, 
-  Clock, 
-  Users, 
-  Calendar,
   MoreHorizontal,
   CheckCircle2
 } from "lucide-react";
@@ -63,6 +60,13 @@ const timeSlots = [
   "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00"
 ];
 
+const mockRooms = [
+  { id: "A101", name: "Lecture Hall A101", capacity: 120 },
+  { id: "B205", name: "Seminar Room B205", capacity: 30 },
+  { id: "C301", name: "Computer Lab C301", capacity: 40 },
+  { id: "D105", name: "Physics Lab D105", capacity: 25 }
+];
+
 type ActionType = "move" | "edit" | "delete" | null;
 
 export function QuickScheduleActions({ 
@@ -77,22 +81,41 @@ export function QuickScheduleActions({
     time: event.time,
     room: event.room
   });
+
   const [editData, setEditData] = useState({
     title: event.title,
-    duration: event.duration,
+    // keeping it simple for mvp for now
+    // duration: event.duration,
+    // lecturer_id: event.lecturer
     room: event.room
   });
   
   const { toast } = useToast();
 
-  const handleMove = () => {
-    onUpdate(event.id, moveData);
-    setActionType(null);
-    toast({
-      title: "Schedule moved",
-      description: `${event.title} has been moved to ${moveData.day} at ${moveData.time}`,
-    });
-  };
+    const handleMove = () => {
+      const dayMap: Record<string, number> = {
+        Monday: 1,
+        Tuesday: 2,
+        Wednesday: 3,
+        Thursday: 4,
+        Friday: 5,
+      };
+
+      const updates = {
+        day_of_week: dayMap[moveData.day],
+        start_time: moveData.time,
+        room: moveData.room,
+      };
+
+      onUpdate(event.id, updates);
+      setActionType(null);
+
+      toast({
+        title: "Schedule moved",
+        description: `${event.title} has been moved to ${moveData.day} at ${moveData.time}`,
+      });
+    };
+
 
   const handleEdit = () => {
     onUpdate(event.id, editData);
@@ -130,37 +153,54 @@ export function QuickScheduleActions({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()} >
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onClick={() => setActionType("edit")}>
+          <DropdownMenuItem onClick={(e) => {
+            e.stopPropagation();
+            setActionType("edit");
+          }}>
             <Edit3 className="mr-2 h-4 w-4" />
             Edit Details
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setActionType("move")}>
+
+          <DropdownMenuItem onClick={(e) => {
+            e.stopPropagation();
+            setActionType("move");
+          }}>
             <Move className="mr-2 h-4 w-4" />
             Move Schedule
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleDuplicate}>
+            {/* removing this for now since we are focusing on mvp based */}
+          {/* <DropdownMenuItem onClick={(e) => {
+            e.stopPropagation();
+            handleDuplicate();
+          }}>
             <Copy className="mr-2 h-4 w-4" />
             Duplicate
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
+
           <DropdownMenuSeparator />
+
           <DropdownMenuItem 
-            onClick={() => setActionType("delete")}
+            onClick={(e) => {
+              e.stopPropagation();
+              setActionType("delete");
+            }}
             className="text-destructive focus:text-destructive"
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
+
       </DropdownMenu>
 
       {/* Move Dialog */}
       <Dialog open={actionType === "move"} onOpenChange={() => setActionType(null)}>
-        <DialogContent>
+        <DialogContent onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
             <DialogTitle>Move Schedule</DialogTitle>
             <DialogDescription>
@@ -227,7 +267,7 @@ export function QuickScheduleActions({
 
       {/* Edit Dialog */}
       <Dialog open={actionType === "edit"} onOpenChange={() => setActionType(null)}>
-        <DialogContent>
+        <DialogContent onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
             <DialogTitle>Edit Schedule</DialogTitle>
             <DialogDescription>
@@ -243,8 +283,9 @@ export function QuickScheduleActions({
                 onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+            <div className="grid grid-cols-1 gap-4">
+              {/* removed the duration because supabase automatically calculates the duration */}
+              {/* <div className="space-y-2">
                 <Label>Duration (hours)</Label>
                 <Select value={editData.duration.toString()} onValueChange={(value) => 
                   setEditData(prev => ({ ...prev, duration: parseFloat(value) }))
@@ -261,7 +302,7 @@ export function QuickScheduleActions({
                     <SelectItem value="3">3 hours</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
               <div className="space-y-2">
                 <Label htmlFor="editRoom">Room</Label>
                 <Input
@@ -286,7 +327,7 @@ export function QuickScheduleActions({
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={actionType === "delete"} onOpenChange={() => setActionType(null)}>
-        <DialogContent>
+        <DialogContent onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
             <DialogTitle>Delete Schedule</DialogTitle>
             <DialogDescription>

@@ -11,6 +11,7 @@ import Timetables from "./pages/Timetables";
 import Analytics from "./pages/Analytics";
 import Login from "./pages/auth/Login";
 import NotFound from "./pages/NotFound";
+import Lecturers from "./pages/Lecturers";
 
 const queryClient = new QueryClient();
 
@@ -30,7 +31,7 @@ const App = () => (
               <Route index element={<Dashboard />} />
               <Route path="timetables" element={<Timetables />} />
               <Route path="analytics" element={<Analytics />} />
-              <Route path="lecturers" element={<div className="p-8 text-center text-muted-foreground">Lecturers page coming soon...</div>} />
+              <Route path="lecturers" element={<Lecturers />} />
               
               {/* Lecturer specific routes */}
               <Route path="my-schedule" element={<div className="p-8 text-center text-muted-foreground">My Schedule page coming soon...</div>} />

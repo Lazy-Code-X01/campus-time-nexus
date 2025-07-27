@@ -12,8 +12,13 @@ interface TimetableFiltersProps {
   onDepartmentChange: (department: string) => void;
   selectedLecturer: string;
   onLecturerChange: (lecturer: string) => void;
-  selectedWeek: string;
-  onWeekChange: (week: string) => void;
+  selectedRoom: string; 
+  onRoomChange: (value: string) => void;
+  rooms: {
+    id: string;
+    name: string;
+    capacity: number;
+  }[];
 }
 
 export function TimetableFilters({
@@ -21,8 +26,9 @@ export function TimetableFilters({
   onDepartmentChange,
   selectedLecturer,
   onLecturerChange,
-  selectedWeek,
-  onWeekChange
+  onRoomChange,
+  selectedRoom,
+  rooms
 }: TimetableFiltersProps) {
   const { departments, loading: departmentsLoading } = useDepartments();
   const { lecturers, loading: lecturersLoading } = useLecturers(selectedDepartment);
@@ -81,21 +87,27 @@ export function TimetableFilters({
             </Select>
           </div>
 
-          {/* Week Filter */}
+          {/* Room Filter */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium">Week</label>
-            <Select value={selectedWeek} onValueChange={onWeekChange}>
+            <label className="text-sm font-medium">Room</label>
+            <Select 
+              value={selectedRoom} 
+              onValueChange={onRoomChange}
+            >
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="Select week" />
+                <SelectValue placeholder="Select room" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="previous">Previous Week</SelectItem>
-                <SelectItem value="current">Current Week</SelectItem>
-                <SelectItem value="next">Next Week</SelectItem>
-                <SelectItem value="custom">Custom Range</SelectItem>
+                <SelectItem value="all">All Rooms</SelectItem>
+                {rooms.map((room) => (
+                  <SelectItem key={room.id} value={room.id}>
+                    {room.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
+
 
           {/* Clear Filters */}
           <div className="flex flex-col gap-2">
@@ -106,7 +118,7 @@ export function TimetableFilters({
               onClick={() => {
                 onDepartmentChange("all");
                 onLecturerChange("all");
-                onWeekChange("current");
+                onRoomChange("all");
               }}
             >
               <Filter className="mr-2 h-4 w-4" />
@@ -139,17 +151,18 @@ export function TimetableFilters({
               </button>
             </Badge>
           )}
-          {selectedWeek !== "current" && (
-            <Badge variant="secondary" className="gap-2">
-              Week: {selectedWeek}
-              <button
-                onClick={() => onWeekChange("current")}
-                className="ml-1 hover:bg-muted rounded-full p-0.5"
-              >
-                ×
-              </button>
-            </Badge>
-          )}
+          {selectedRoom !== "all" && (
+          <Badge variant="secondary" className="gap-2">
+            Room: {selectedRoom}
+            <button
+              onClick={() => onRoomChange("all")}
+              className="ml-1 hover:bg-muted rounded-full p-0.5"
+            >
+              ×
+            </button>
+          </Badge>
+        )}
+
         </div>
       </CardContent>
     </Card>

@@ -60,9 +60,9 @@ interface ScheduleFormData {
 
 const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 const timeSlots = [
-  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
-  "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
-  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00"
+  "08:00", "09:00", "10:00",
+  "11:00", "12:00", "13:00",
+  "14:00",  "15:00", "16:00", "17:00"
 ];
 
 const scheduleTypes = [
@@ -71,6 +71,22 @@ const scheduleTypes = [
   { value: "tutorial", label: "Tutorial", icon: "👥" },
   { value: "exam", label: "Examination", icon: "📝" }
 ];
+
+const mockRooms = [
+  { id: "A101", name: "Lecture Hall A101", capacity: 120 },
+  { id: "B205", name: "Seminar Room B205", capacity: 30 },
+  { id: "C301", name: "Computer Lab C301", capacity: 40 },
+  { id: "D105", name: "Physics Lab D105", capacity: 25 }
+];
+
+const mockCourses = [
+  { code: "CS101", title: "Introduction to Computer Science" },
+  { code: "CS201", title: "Data Structures & Algorithms" },
+  { code: "CS301", title: "Software Engineering" },
+  { code: "CS401", title: "Artificial Intelligence" }
+];
+
+
 
 export function CreateScheduleDialog({ departments, lecturers, onSave }: CreateScheduleDialogProps) {
   const [open, setOpen] = useState(false);
@@ -119,17 +135,31 @@ export function CreateScheduleDialog({ departments, lecturers, onSave }: CreateS
     return conflicts.length === 0;
   };
 
+  function calculateEndTime(startTime: string, durationHours: number): string {
+  const [startHour, startMinute] = startTime.split(":").map(Number);
+  const totalStartMinutes = startHour * 60 + startMinute;
+  const totalEndMinutes = totalStartMinutes + durationHours * 60;
+  const endHour = Math.floor(totalEndMinutes / 60);
+  const endMinute = totalEndMinutes % 60;
+  return `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`;
+}
+
+
   const handleSubmit = () => {
     if (checkConflicts()) {
       // Convert form data to database format
+      const endTime = calculateEndTime(formData.startTime, formData.duration);
+
       const scheduleData = {
         title: formData.title,
         department_id: formData.department,
         lecturer_id: formData.lecturer,
         type: formData.type,
-        day_of_week: formData.day, // Will be converted to number in hook
+        // day_of_week: weekDays.indexOf(formData.day),
+        day_of_week: weekDays.indexOf(formData.day) + 1,
+
         start_time: formData.startTime,
-        duration: `${formData.duration} hours`,
+        end_time: endTime, 
         room: formData.room,
         capacity: formData.capacity,
         student_count: formData.estimatedStudents
@@ -180,20 +210,39 @@ export function CreateScheduleDialog({ departments, lecturers, onSave }: CreateS
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="title">Course/Session Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="e.g., Data Structures & Algorithms"
+
+                <Select
                   value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                />
+                  onValueChange={(value) => {
+                    const selected = mockCourses.find(course => course.title === value);
+                    setFormData(prev => ({
+                      ...prev,
+                      title: value,
+                      courseCode: selected?.code || ''
+                    }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select course title" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mockCourses.map(course => (
+                      <SelectItem key={course.code} value={course.title}>
+                        {course.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="courseCode">Course Code</Label>
                 <Input
                   id="courseCode"
                   placeholder="e.g., CS301"
                   value={formData.courseCode}
-                  onChange={(e) => setFormData(prev => ({ ...prev, courseCode: e.target.value }))}
+                  // onChange={(e) => setFormData(prev => ({ ...prev, courseCode: e.target.value }))}
+                  disabled 
                 />
               </div>
             </div>
@@ -342,21 +391,41 @@ export function CreateScheduleDialog({ departments, lecturers, onSave }: CreateS
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="room">Room *</Label>
-                <Input
-                  id="room"
-                  placeholder="e.g., CS-101"
+                <Select
                   value={formData.room}
-                  onChange={(e) => setFormData(prev => ({ ...prev, room: e.target.value }))}
-                />
+                  onValueChange={(value) => {
+                    const selected = mockRooms.find(r => r.id === value);
+                    setFormData((prev) => ({
+                      ...prev,
+                      room: value,
+                      capacity: selected?.capacity || prev.capacity
+                    }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select room" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mockRooms.map((room) => (
+                      <SelectItem key={room.id} value={room.id}>
+                        {room.name} ({room.capacity})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="capacity">Room Capacity</Label>
                 <Input
                   id="capacity"
                   type="number"
                   value={formData.capacity}
-                  onChange={(e) => setFormData(prev => ({ ...prev, capacity: parseInt(e.target.value) || 0 }))}
+                  disabled
                 />
+                <p className="text-xs text-muted-foreground">
+                Auto-filled based on selected room
+              </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="estimatedStudents">Expected Students</Label>

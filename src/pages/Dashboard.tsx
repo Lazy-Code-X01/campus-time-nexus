@@ -123,10 +123,6 @@ export default function Dashboard() {
               <Users className="mr-2 h-4 w-4" />
               Manage Lecturers
             </Button>
-            <Button variant="outline" className="w-full justify-start">
-              <Clock className="mr-2 h-4 w-4" />
-              Set Time Slots
-            </Button>
           </CardContent>
         </Card>
 
@@ -158,50 +154,7 @@ export default function Dashboard() {
       </div>
 
       {/* Alerts and Notifications */}
-      {(mockStats.conflicts > 0 || mockStats.upcomingDeadlines > 0) && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Attention Required</h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            {mockStats.conflicts > 0 && (
-              <Card className="border-destructive">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-destructive">
-                    <AlertTriangle className="mr-2 h-4 w-4" />
-                    Schedule Conflicts
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {mockStats.conflicts} scheduling conflicts need resolution
-                  </p>
-                  <Button variant="destructive" size="sm">
-                    Resolve Conflicts
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {mockStats.upcomingDeadlines > 0 && (
-              <Card className="border-orange-500">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-orange-600">
-                    <Clock className="mr-2 h-4 w-4" />
-                    Upcoming Deadlines
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {mockStats.upcomingDeadlines} deadlines approaching this week
-                  </p>
-                  <Button variant="outline" size="sm">
-                    View Deadlines
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
-      )}
+      {/* {(m */}
     </div>
   );
 }

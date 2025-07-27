@@ -16,35 +16,65 @@ export function useSchedules() {
     fetchSchedules();
   }, []);
 
-  const fetchSchedules = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('schedules')
-        .select(`
-          *,
-          departments (
-            id,
-            name,
-            color
-          ),
-          lecturers (
-            id,
-            profiles (
-              name
-            )
-          )
-        `);
+  // const fetchSchedules = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const { data, error } = await supabase
+  //       .from('schedules')
+  //       .select(`
+  //         *,
+  //         departments (
+  //           id,
+  //           name,
+  //           color
+  //         ),
+  //         lecturers (
+  //           id,
+  //           profiles (
+  //             name
+  //           )
+  //         )
+  //       `);
 
-      if (error) throw error;
-      setSchedules(data || []);
-    } catch (err) {
-      console.error('Error fetching schedules:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch schedules');
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     if (error) throw error;
+  //     setSchedules(data || []);
+  //   } catch (err) {
+  //     console.error('Error fetching schedules:', err);
+  //     setError(err instanceof Error ? err.message : 'Failed to fetch schedules');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const fetchSchedules = async () => {
+  try {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('schedules')
+      .select(`
+        *,
+        departments (
+          id,
+          name,
+          color
+        ),
+        lecturers (
+          id,
+          name,
+          email
+        )
+      `);
+
+    if (error) throw error;
+    setSchedules(data || []);
+  } catch (err) {
+    console.error('Error fetching schedules:', err);
+    setError(err instanceof Error ? err.message : 'Failed to fetch schedules');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const createSchedule = async (scheduleData: ScheduleInsert) => {
     try {
@@ -75,7 +105,8 @@ export function useSchedules() {
         .from('schedules')
         .insert({
           ...scheduleData,
-          day_of_week: dayMap[scheduleData.day_of_week as unknown as string] || 1,
+          // day_of_week: dayMap[scheduleData.day_of_week as unknown as string] || 1,
+          day_of_week: scheduleData.day_of_week,
           start_time: startTime,
           end_time: endTime
         })
@@ -118,7 +149,7 @@ export function useSchedules() {
         description: "Schedule has been updated successfully."
       });
 
-      await fetchSchedules(); // Refresh the list
+      await fetchSchedules(); 
     } catch (err) {
       console.error('Error updating schedule:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to update schedule';
@@ -133,6 +164,8 @@ export function useSchedules() {
 
   const deleteSchedule = async (id: string) => {
     try {
+      console.log("Attempting to delete schedule with ID:", id);
+
       const { error } = await supabase
         .from('schedules')
         .delete()
@@ -145,7 +178,8 @@ export function useSchedules() {
         description: "Schedule has been removed successfully."
       });
 
-      await fetchSchedules(); // Refresh the list
+      await fetchSchedules(); 
+
     } catch (err) {
       console.error('Error deleting schedule:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete schedule';
