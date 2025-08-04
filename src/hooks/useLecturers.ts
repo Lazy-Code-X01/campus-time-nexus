@@ -10,7 +10,7 @@ interface Lecturer {
 }
 
 
-export function useLecturers(departmentFilter?: string) {
+export function useLecturers() {
   const [lecturers, setLecturers] = useState<Lecturer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,29 +18,13 @@ export function useLecturers(departmentFilter?: string) {
   const fetchLecturers = async () => {
     try {
       setLoading(true);
-      let query = supabase
+      const { data, error } = await supabase
         .from("lecturers")
-        .select("*")
+        .select("id, name, email, department_id")
         .order("created_at");
-      
-      if (departmentFilter && departmentFilter !== "all") {
-        query = query.eq("department_id", departmentFilter);
-      }
-
-      const { data, error } = await query;
 
       if (error) throw error;
-      
-      // Map the data to match our interface
-      const mappedData = (data || []).map((lecturer: any) => ({
-        id: lecturer.id,
-        name: lecturer.name || lecturer.specialization || 'Unknown',
-        email: lecturer.email || '',
-        department_id: lecturer.department_id,
-        created_at: lecturer.created_at
-      }));
-      
-      setLecturers(mappedData);
+      setLecturers(data || []);
     } catch (err) {
       console.error("Failed to fetch lecturers:", err);
       setError("Unable to load lecturers");
@@ -51,20 +35,10 @@ export function useLecturers(departmentFilter?: string) {
 
   useEffect(() => {
     fetchLecturers();
-  }, [departmentFilter]);
+  }, []);
 
   const addLecturer = async (newLecturer: Omit<Lecturer, "id">) => {
-    const lecturerData: any = {
-      department_id: newLecturer.department_id,
-      specialization: newLecturer.name,
-      user_id: "placeholder" // This should be fixed when linking to auth users
-    };
-    
-    // Only add name/email if they exist in the table
-    if ((newLecturer as any).name) lecturerData.name = newLecturer.name;
-    if ((newLecturer as any).email) lecturerData.email = newLecturer.email;
-    
-    const { error } = await supabase.from("lecturers").insert(lecturerData);
+    const { error } = await supabase.from("lecturers").insert(newLecturer);
     if (error) throw error;
     await fetchLecturers();
   };

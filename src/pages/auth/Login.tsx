@@ -21,7 +21,7 @@ export default function Login() {
     email: "",
     password: "",
     name: "",
-    role: "admin"
+    role: "student"
   });
 
   // Redirect if already authenticated
@@ -72,7 +72,7 @@ export default function Login() {
     try {
       const { error } = await signUp(formData.email, formData.password, {
         name: formData.name,
-        role: "admin"
+        role: formData.role
       });
       
       if (error) {
@@ -200,14 +200,16 @@ export default function Login() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-role">Role</Label>
-                  <Input
-                    id="signup-role"
-                    type="text"
-                    value="Administrator"
-                    disabled
-                    className="bg-muted"
-                  />
-                  <p className="text-xs text-muted-foreground">Currently only admin accounts can be created</p>
+                  <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="lecturer">Lecturer</SelectItem>
+                      <SelectItem value="admin">Administrator</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>

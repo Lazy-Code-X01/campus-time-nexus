@@ -13,7 +13,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import pcuLogo from "@/assets/pcu-logo.png";
-import { useAuth } from "@/hooks/useAuth";
+
+// Mock user role - this will be replaced with real authentication
+const mockUserRole = "admin"; // admin, lecturer, student
 
 // Navigation items based on user roles
 const navigationItems = {
@@ -69,13 +71,11 @@ const navigationItems = {
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const { user } = useAuth();
   const location = useLocation();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
 
-  const userRole = user?.user_metadata?.role || "student";
-  const items = navigationItems[userRole as keyof typeof navigationItems] || navigationItems.student;
+  const items = navigationItems[mockUserRole as keyof typeof navigationItems] || navigationItems.student;
 
   // Group items by their group property
   const groupedItems = items.reduce((acc, item) => {
