@@ -56,7 +56,7 @@ export function ScheduleConflictChecker({ conflicts, onResolveConflict }: Props)
         //     )}
         //   </CardContent>
         // </Card>
-        <Card className="border border-destructive/50 bg-destructive/5 mb-4 shadow-sm">
+        <Card key={conflict.id} className="border border-destructive/50 bg-destructive/5 mb-4 shadow-sm">
   <CardHeader className="border-b flex flex-col gap-1">
     <div className="flex justify-between items-center">
       <div className="flex items-center gap-2">
