@@ -1,9 +1,10 @@
 
-import { Calendar, Users, Home } from "lucide-react";
+import { Calendar, Users, Home, LogOut } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -12,6 +13,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import pcuLogo from "@/assets/pcu-logo.png";
 
 // Mock user role - this will be replaced with real authentication
@@ -74,6 +77,7 @@ export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
+  const { signOut } = useAuth();
 
   const items = navigationItems[mockUserRole as keyof typeof navigationItems] || navigationItems.student;
 
@@ -138,6 +142,24 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
+      
+      <SidebarFooter className="p-4 border-t">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Button
+                variant="ghost"
+                onClick={signOut}
+                className="w-full justify-start hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                title={collapsed ? "Logout" : undefined}
+              >
+                <LogOut className="h-4 w-4 flex-shrink-0" />
+                {!collapsed && <span>Logout</span>}
+              </Button>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }
