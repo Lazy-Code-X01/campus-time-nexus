@@ -59,7 +59,7 @@ export function useLecturers(departmentFilter?: string) {
         email: newLecturer.email,
         department_id: newLecturer.department_id,
         specialization: newLecturer.specialization || null
-      }]);
+      } as any]);
       if (error) throw error;
       await fetchLecturers();
     } catch (err) {
